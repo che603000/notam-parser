@@ -11,8 +11,11 @@
  */
 
 import {ru2en} from "./utils/translate";
-
-const FIELDS = 'ЩАБЦДЕФГ';
+import {parseQ} from "./utils/parse-q";
+import {parserAlts} from "./utils/alts-parser";
+import {dateParser} from "./utils/date-parser";
+import {INotam, IModelNotam} from './interface';
+import {createSchedule} from "./utils/parse-schedule";
 
 export enum NOTAM_FIELD {
     A = 'А',
@@ -25,17 +28,6 @@ export enum NOTAM_FIELD {
     Q = 'Щ',
 }
 
-export interface INotam {
-    id: string
-    Q: string,
-    A: string
-    B?: Date
-    C?: Date
-    E: string
-    F: string
-    G: string
-}
-
 export const handlerNotam = (text: string) => {
 
     const enText = ru2en(text);
@@ -45,34 +37,45 @@ export const handlerNotam = (text: string) => {
     return m[1]
 }
 
-export const selectFiled = (nameFile: NOTAM_FIELD, text: string) => {
-    const reg = new RegExp(`${nameFile}\\)(.*?)([${FIELDS}]\\)|\\)$)`, 's');
+export const selectFiled = (name: NOTAM_FIELD, source: string) => {
+    const text = source.replace('(ЗОНА)', '');
+    const reg = new RegExp(`${name}\\)([\\s\\S]*?)([ЩАБЦДЕФГ]\\)|$)`);
     const match = text.match(reg);
     if (!match)
         return "";
     return match[1];
 }
 
-export const dateParser = (text: string) => {
-    const match = text.match(/([0-9]{2})([0-9]{2})([0-9]{2})([0-9]{2})([0-9]{2})/);
-    if (!match)
-        return;
-    const [s, y, m, d, hour, min] = match;
-    console.log(text);
-    return new Date(Date.UTC(+y + 2000, +m - 1, +d, +hour, +min, 0, 0));
-}
-
 export const parserNotam = (text: string): INotam => {
     return {
-        id: handlerNotam(text),
+        text,
         A: ru2en(selectFiled(NOTAM_FIELD.A, text)),
-        B: dateParser(selectFiled(NOTAM_FIELD.B, text)),
-        C: dateParser(selectFiled(NOTAM_FIELD.C, text)),
+        B: selectFiled(NOTAM_FIELD.B, text),
+        C: selectFiled(NOTAM_FIELD.C, text),
         D: selectFiled(NOTAM_FIELD.D, text),
         E: selectFiled(NOTAM_FIELD.E, text),
         F: selectFiled(NOTAM_FIELD.F, text),
         G: selectFiled(NOTAM_FIELD.G, text),
-        Q: ru2en(selectFiled(NOTAM_FIELD.Q, text))
+        Q: selectFiled(NOTAM_FIELD.Q, text)
     } as INotam
+}
 
+export const createModel = (notam: INotam): IModelNotam => {
+    const {text, A, B, C, D, F, G, Q} = notam;
+    const dateStart = dateParser(B, new Date('2022-01-01T00:00:00'));
+    const dateEnd = dateParser(C, new Date('2032-01-01T00:00:00'));
+    return {
+        id: handlerNotam(text),
+        text,
+        notam,
+        area: A.trim(),
+        schedule: {
+            str: `${dateStart?.toISOString()}-${dateEnd?.toISOString()}, ${D}`,
+            range: [dateStart, dateEnd],
+            times: createSchedule([dateStart, dateEnd], D)
+        },
+        props: parseQ(Q),
+        items: [],
+        alts: parserAlts(`${F.trim()}-${G.trim()}`)
+    } as IModelNotam
 }
