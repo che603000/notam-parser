@@ -20,12 +20,21 @@ const TEMPLATE = [
     '\\d{1,5}\\s?[МM] AMSL',
     'ЭШ\\d{2,3}'
 ]
-const regExp = new RegExp(`((${[...TEMPLATE_GND, ...TEMPLATE].join('|')})[-\\s]{1,4}(${TEMPLATE.join('|')}))`, 'i');
+
+const TEMPLATE_UNL = [
+    'НЕОГРАНИ',
+    'UNL'
+]
+const regExp = new RegExp(`((${[...TEMPLATE_GND, ...TEMPLATE].join('|')})[-\\s]{1,4}(${[...TEMPLATE, ...TEMPLATE_UNL].join('|')}))`, 'i');
 const regTestGND = new RegExp(TEMPLATE_GND.join('|'), 'i');
+const regTestUNL = new RegExp(TEMPLATE_UNL.join('|'), 'i');
 
 export const parserAlt = (text: string) => {
     if (regTestGND.test(text))
         return 0;
+
+    if (regTestUNL.test(text))
+        return 100000;
 
     if (/ЭШ/.test(text)) {
         const m = text.match(/\d{2,3}/g);

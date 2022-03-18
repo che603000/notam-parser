@@ -42,7 +42,7 @@ const mapper = new Map<string, string>([
     ['Щ', 'Q'],
     ['Ь', 'X'],
     ['Ю', 'IU'],
-    ['Я', 'IA']
+    ['Я', 'Y']
 ])
 
 

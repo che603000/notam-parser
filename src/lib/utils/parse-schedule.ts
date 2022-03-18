@@ -1,3 +1,5 @@
+import {TRange, TRangeDate, TSchedule} from "../interface";
+
 const rangeDay = (start: number, end: number) => {
     const res = [];
     for (let i = start; i <= end; i++) {
@@ -19,14 +21,15 @@ const testLimitDate = (range: [Date, Date], date: Date) => {
     return start <= date && date <= end;
 }
 
-const createRangeTime = (limitedDate: [Date, Date], day: number, times: string) => {
+const createRangeTime = (limitedDate: [Date, Date], day: number, times: string): TRangeDate | undefined => {
     const m = times.replace(/ /g, '').match(/(\d{2})(\d{2})-(\d{2})(\d{2})/);
     if (!m) throw new Error(`Error create rangeTime. source =${times} `);
-    const [, h1, m1, h2, m2] = m;
-    const start = createNow(day, [+h1, +m1]);
-    const end = createNow(day, [+h2, +m2]);
+    const [, startHours, startMinutes, endHours, endMinutes] = m;
+    const start = createNow(day, [+startHours, +startMinutes]);
+    const addDay = (+startHours) > (+endHours) ? 1 : 0; // если время начала больше времени окончания то конец след днем
+    const end = createNow(day + addDay, [+endHours, +endMinutes]);
     if (testLimitDate(limitedDate, start) && testLimitDate(limitedDate, end))
-        return [start, end] as [Date, Date];
+        return [start, end] as TRangeDate;
     else
         return;
 }
@@ -96,14 +99,14 @@ const parseTimes = (text: string) => {
 
 }
 
-export const createSchedule = (range: [Date, Date], text: string) => {
+export const createSchedule = (range: [Date, Date], text: string): TRangeDate[] => {
     if (!text)
         return [range];
 
     const days = parseDays(text);
     const times = parseTimes(text);
 
-    const res: [Date, Date][] = [];
+    const res: TRangeDate[] = [];
     days.forEach(day => {
         times.forEach(time => {
             const rangeTime = createRangeTime(range, day, time);

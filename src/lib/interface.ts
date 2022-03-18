@@ -1,32 +1,19 @@
-export interface INotam {
-    text: string
-    Q: string,
-    A: string
-    B: string
-    D: string
-    C: string
-    E: string
-    F: string
-    G: string
+import {Geometry, Feature} from "@turf/turf";
+
+export type TRange = [number, number] //интервал времени когда зона активна UTC в ms
+
+export type TRangeDate = [Date, Date] //интервал времени когда зона активна UTC Date
+
+export type TSchedule = {
+    str: string;
+    rangeDate: TRangeDate;  // начало и конец активности зоны (без учета времени внутри интервала)
+    rangeTime?: TRangeDate[]; // массив интервалов времени когда зона активна 5 дней
+    active: boolean
 }
 
-export interface ISchedule {
-    str: string
-    range: [Date, Date],
-    times?: [Date, Date][]
-}
-
-export interface IModelNotam {
-    id: string
-    text: string
-    notam: INotam
-    props: IQField
-    schedule: ISchedule
-    items: any[]
-    alts?: {
-        str: string,
-        range: [number, number]
-    }
+export type TAlts = {
+    range: TRange
+    str: string;
 }
 
 export interface IQField {
@@ -66,4 +53,51 @@ export interface IQField {
     alts: [number, number],
     center: [number, number]
     radius: number
+}
+
+export interface INotam {
+    text: string
+    Q: string,
+    A: string
+    B: string
+    D: string
+    C: string
+    E: string
+    F: string
+    G: string
+}
+
+export interface IModelNotam {
+    id: string
+    text: string
+    notam: INotam
+    props: IQField
+    schedule: TSchedule
+    regime?: string
+    index?: string
+    items: Feature[]
+    alts?: TAlts,
+    isValid?: boolean
+}
+
+export interface IActiveTime {
+    [index: string]: TSchedule
+}
+
+export interface IRegime {
+    id: string
+    type: string;
+    index: string;
+    name: string
+    active: boolean
+    activeSchedule?: TSchedule;
+
+    alts: TAlts;
+
+    schedule: string;
+    comment: string
+    isValid: boolean
+
+    geometry: Geometry
+    checksum?: number
 }

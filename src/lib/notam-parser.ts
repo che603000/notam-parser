@@ -31,7 +31,7 @@ export enum NOTAM_FIELD {
 export const handlerNotam = (text: string) => {
 
     const enText = ru2en(text);
-    const m = enText.match(/^\(+(\w\d{4}\/\d{2}) NOTAM(\w)/);
+    const m = enText.match(/^\(?([A-Z]\d{4}\/\d{2}.*?)\s/);
     if (!m)
         return
     return m[1]
@@ -45,6 +45,24 @@ export const selectFiled = (name: NOTAM_FIELD, source: string) => {
         return "";
     return match[1];
 }
+
+export const parseRegime = (text: string) => {
+    let m = text.match(/\(([МM][РR]\d{2,8})/); // мест режим
+    if (!m)
+        m = text.match(/\(([BВV][РОPRO]\d{3,6})/); // врем режим
+
+    if (!m)
+        return "";
+    return m[1];
+}
+
+export const parseIndex = (text: string) => {
+    const m = text.match(/\w{2,4}\d{2,6}/);
+    if (!m)
+        return "";
+    return m[0];
+}
+
 
 export const parserNotam = (text: string): INotam => {
     return {
@@ -61,7 +79,7 @@ export const parserNotam = (text: string): INotam => {
 }
 
 export const createModel = (notam: INotam): IModelNotam => {
-    const {text, A, B, C, D, F, G, Q} = notam;
+    const {text, A, B, C, D, E, F, G, Q} = notam;
     const dateStart = dateParser(B, new Date('2022-01-01T00:00:00'));
     const dateEnd = dateParser(C, new Date('2032-01-01T00:00:00'));
     return {
@@ -71,11 +89,14 @@ export const createModel = (notam: INotam): IModelNotam => {
         area: A.trim(),
         schedule: {
             str: `${dateStart?.toISOString()}-${dateEnd?.toISOString()}, ${D}`,
-            range: [dateStart, dateEnd],
-            times: createSchedule([dateStart, dateEnd], D)
+            rangeDate: [dateStart, dateEnd],
+            timesDate: createSchedule([dateStart, dateEnd], D),
+            active: false
         },
         props: parseQ(Q),
         items: [],
-        alts: parserAlts(`${F.trim()}-${G.trim()}`)
+        alts: parserAlts(`${F.trim()}-${G.trim()}`),
+        regime: parseRegime(E),
+        index: parseIndex(E)
     } as IModelNotam
 }

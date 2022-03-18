@@ -1,43 +1,101 @@
-import {parserNotam, createModel} from "./lib/field-parser";
+import {parserNotam, createModel} from "./lib/notam-parser";
 import {parserTextNotam} from "./lib/utils/geometry";
-import data from './data/notam-data.json';
-import {Feature} from "@turf/turf";
-
-console.log('start !!!')
-
-const notam = `(К4234/19 НОТАМН
-Щ)УУВЖ/ЩРТЦА/ИЖ/БО/В/000/020/5430С03154В044
-А)УУВЖ Б)1904040600 Ц)1904081600
-Д)04-08 0600-1600
-Е)ЗАПРЕЩЕНО ИСПОЛЬЗОВАНИЕ ВОЗДУШНОГО ПРОСТРАНСТВА:
-1. ОКРУЖНОСТЬ РАДИУС 0.5КМ ЦЕНТР 540000С0324800В. ПОВЕРХНОСТЬ-550М СР.УР.МОРЯ.
-2. ПОЛОСА ШИРИНОЙ ПО 1КМ В ОБЕ СТОРОНЫ ОТ ОСИ МАРШРУТА 540000С0324800В-541500С0323500В-541800С0322800В-544600С0320400В. 400М УР.ЗЕМЛИ-550М СР.УР.МОРЯ.
-3. ПОЛОСА ШИРИНОЙ ПО 1КМ В ОБЕ СТОРОНЫ ОТ ОСИ МАРШРУТА 545900С0305900В-545800С0310300В-545700С0310600В-545600С0310700В- 544600С0313900В-544600С0314400В-544700С0314800В-544700С0315000В- 544700С0320000В-544800С0320100В-544700С0320000В-544700С0315000В- 544700С0314800В-544600С0315000В-544500С0315300В-544400С0315700В- 544400С0320000В-544300С0320300В-544300С0320500В-544200С0321000В- 544300С0321200В-544500С0321200В-544600С0321500В-544700С0321600В- 545200С0321500В-545300С0321300В-545600С0321000В. 350М СР.УР.МОРЯ-400М СР.УР.МОРЯ.
-4. СЕКТОР ЦЕНТР 600115С0304715В АЗИМУТ 300-120 ГР. РАДИУС 2КМ ПОВЕРХНОСТЬ-900М СР.УР.МОРЯ.
-Ф)ПОВЕРХНОСТЬ Г)550 М СР.УР.МОРЯ)`;
+import {circle as createCircle} from "@turf/turf";
+import {IActiveTime, IModelNotam, IRegime} from "./lib/interface";
+import {hashCode} from "./lib/utils/hash-code";
 
 
-//const s = parserNotam(notam);
-//parserTextNotam(s.E, []);
-const d = data.items
-    .map(item => parserNotam(item))
-    .map(item => createModel(item))
-    .filter(item => item.props?.subject === "RT")
-    .map(item => {
-        if (item.props?.subject === "RT") {
-            try {
-                // if (item.id === 'E2011/21')
-                //     debugger;
-                item.items = parserTextNotam(item.notam.E);
-            } catch (e) {
-                console.log(e, '\n', item.text);
-            }
+export class Notams {
+    models: IModelNotam[];
 
-        }
+    constructor(items: string[]) {
+        const nowDate = new Date();
 
+        this.models = items.map(item => parserNotam(item))
+            .map(item => createModel(item))
+            .filter(item => {
+                const [, e] = item.schedule.rangeDate;
+                return nowDate <= e;
+            });
+    }
 
-        return item;
-    })
+    /**
+     "RA": "резервирование воздушного пространства (указать)",
+     "RD": "опасная зона (указать национальный индекс и номер)",
+     "RP": "запретная зона (указать национальный индекс и номер)",
+     "RR": "зона ограничения полетов (указать национальный индекс и номер)",
+     * @param subjects
+     */
+    createActiveTime = (subjects: string[]): IActiveTime => {
+        return this.models
+            .filter((item: IModelNotam) => subjects.some(s => s === item.props.subject))
+            .map(model => {
+                const {index, schedule} = model;
+                return {index, schedule};
+            })
+            .reduce((res, item) => {
+                if (item.index)
+                    res[item.index] = item.schedule;
+                return res;
+            }, {} as IActiveTime);
+    }
+    /**
+     "RT": "зона временного ограничения полетов (указать зону)",
+     "WB": "выполнение фигур высшего пилотажа",
+     "WD": "подрыв взрывчатых веществ",
+     "WP": "Тренировочные парашютные прыжки, парапланеризм или дельтапланеризм",
+     "WE": "учения (указать)",
+     "WM": "пуски ракет, стрельба из пушек или стредьба ракетами",
+     * @param type
+     * @param subjects
+     */
+    createRegime = (type: string, subjects: string[]): IRegime[] => {
+        return this.models
+            .filter((model: IModelNotam) => subjects.some(s => s === model.props.subject))
+            .map(model => {
+                try {
+                    model.items = parserTextNotam(model.notam.E);
+                    if (model.items.length === 0)
+                        throw new Error('Parsing not found')
+                    model.isValid = true;
+                } catch (e) {
+                    console.log(e, '\n', model.text);
+                    model.items = [createCircle(model.props.center, model.props.radius)];
+                    model.isValid = false;
+                }
+                return model;
+            })
+            .reduce((res: any[], model) => {
+                model.items.forEach((item, index) => {
+                    const {id, items, ...data} = model;
+                    const m = {...data, geometry: item.geometry, id, cid: `${model.id}-${index}`}
+                    res.push(m);
+                })
+                return res;
+            }, [])
+            .map(model => {
+                const {id, cid, regime, schedule, alts, text, isValid, geometry} = model;
+                return {
+                    id: cid,
+                    type,
+                    name: id,
+                    index: regime,
+                    activeSchedule: schedule,
+                    alts: alts,
+                    active: false,
 
-debugger;
-//console.log(s);
+                    schedule: schedule.str,
+                    comment: text,
+                    isValid,
+
+                    geometry,
+                    checksum: hashCode({text})
+
+                } as IRegime;
+            })
+    }
+}
+
+// const notams = new Notams(data.items);
+// const actives = notams.createActiveTime(["RR"]);
+// const regime = notams.createRegime('REGIMEZ', ["RT", "WB", "WD", "WP", "WE", "WM"]);

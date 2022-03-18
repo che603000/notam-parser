@@ -1,7 +1,7 @@
 import {Feature, polygon as createPolygon, truncate} from "@turf/turf";
 import {pathCoords} from "../coords-parser";
 
-const type = ' РАЙОН ';
+const type = 'РАЙОН';
 const regType = new RegExp(type, 'i');
 
 export const area = {
