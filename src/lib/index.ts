@@ -54,8 +54,6 @@ export class Notams {
             .filter((model: IModelNotam) => subjects.some(s => s === model.props.subject))
             .map(model => {
                 try {
-                    if(/9348/.test(model.id))
-                        debugger;
                     model.items = parserTextNotam(model.notam.E);
                     if (model.items.length === 0)
                         throw new Error(`Invalid parsing geometry. source =${model.notam.E}`);

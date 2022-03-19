@@ -103,7 +103,4 @@ class Notams {
     }
 }
 exports.Notams = Notams;
-// const notams = new Notams(data.items);
-// const actives = notams.createActiveTime(["RR"]);
-// const regime = notams.createRegime('REGIMEZ', ["RT", "WB", "WD", "WP", "WE", "WM"]);
 //# sourceMappingURL=index.js.map
