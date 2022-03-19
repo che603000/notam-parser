@@ -38,7 +38,7 @@ export const handlerNotam = (text: string) => {
 }
 
 export const selectFiled = (name: NOTAM_FIELD, source: string) => {
-    const text = source.replace('(ЗОНА)', '');
+    const text = (source || "").replace('(ЗОНА)', '');
     const reg = new RegExp(`${name}\\)([\\s\\S]*?)([ЩАБЦДЕФГ]\\)|$)`);
     const match = text.match(reg);
     if (!match)
@@ -90,7 +90,7 @@ export const createModel = (notam: INotam): IModelNotam => {
         schedule: {
             str: `${dateStart?.toISOString()}-${dateEnd?.toISOString()}, ${D}`,
             rangeDate: [dateStart, dateEnd],
-            timesDate: createSchedule([dateStart, dateEnd], D),
+            rangeTime: createSchedule([dateStart, dateEnd], D),
             active: false
         },
         props: parseQ(Q),

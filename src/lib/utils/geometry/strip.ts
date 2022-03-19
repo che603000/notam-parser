@@ -36,29 +36,30 @@ const unions = (polygons: Feature<Polygon>[], properties: any): Feature<Polygon 
     if (polygons.length === 0)
         return null;
 
-    const ccc = polygons
-        .filter(p => p.properties?.circle)
-        //.map(p => truncate(p, {precision: 4, coordinates: 2}))
-        //.map(p => cleanCoords(p))
-        .map(p => getCoords(p));
-    const c = multiPolygon(ccc);
-    const ppp = polygons
-        .filter(p => p.properties?.circle === undefined)
-        //.map(p => truncate(p, {precision: 4, coordinates: 2}))
-        //.map(p => cleanCoords(p))
-        .map(p => getCoords(p));
-    const p = multiPolygon(ppp);
-    return union(c, p, {properties});
-    // let res: Feature<Polygon | MultiPolygon> = polygons[0];
-    // for (let index = 0; index < polygons.length; index++) {
-    //     const nextPolygon = polygons[index + 1];
-    //     if (!nextPolygon)
-    //         break;
-    //     const newPolygon: any = union(res, nextPolygon, {});
-    //     if (newPolygon)
-    //         res = newPolygon;
-    // }
-    // return res;
+    // const ccc = polygons
+    //     .filter(p => p.properties?.circle)
+    //     //.map(p => truncate(p, {precision: 4, coordinates: 2}))
+    //     //.map(p => cleanCoords(p))
+    //     .map(p => getCoords(p));
+    // const c = multiPolygon(ccc);
+    // const ppp = polygons
+    //     .filter(p => p.properties?.circle === undefined)
+    //     //.map(p => truncate(p, {precision: 4, coordinates: 2}))
+    //     //.map(p => cleanCoords(p))
+    //     .map(p => getCoords(p));
+    // const p = multiPolygon(ppp);
+    // return union(c, p, {properties});
+
+    let res: Feature<Polygon | MultiPolygon> = polygons[0];
+    for (let index = 0; index < polygons.length; index++) {
+        const nextPolygon = polygons[index + 1];
+        if (!nextPolygon)
+            break;
+        const newPolygon: any = union(res, nextPolygon, {});
+        if (newPolygon)
+            res = newPolygon;
+    }
+    return res;
 }
 
 const createStrip = (path?: TPoint[], width?: number, properties?: any) => {
