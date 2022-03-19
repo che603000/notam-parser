@@ -1,0 +1,1 @@
+{"version":3,"file":"area.d.ts","sourceRoot":"","sources":["../../../../src/lib/utils/geometry/area.ts"],"names":[],"mappings":"AAAA,OAAO,EAAC,OAAO,EAAqC,MAAM,YAAY,CAAC;AAMvE,eAAO,MAAM,IAAI;eACF,MAAM,GAAG,OAAO;mBAGZ,MAAM,GAAG,MAAM;iBAGjB,MAAM,GAAG,OAAO;CAehC,CAAA"}
