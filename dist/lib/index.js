@@ -23,6 +23,7 @@ class Notams {
          "RD": "опасная зона (указать национальный индекс и номер)",
          "RP": "запретная зона (указать национальный индекс и номер)",
          "RR": "зона ограничения полетов (указать национальный индекс и номер)",
+         * @param type
          * @param subjects
          */
         this.createActiveTime = (type, subjects) => {
@@ -53,8 +54,6 @@ class Notams {
                 .filter((model) => subjects.some(s => s === model.props.subject))
                 .map(model => {
                 try {
-                    if (/9348/.test(model.id))
-                        debugger;
                     model.items = (0, geometry_1.parserTextNotam)(model.notam.E);
                     if (model.items.length === 0)
                         throw new Error(`Invalid parsing geometry. source =${model.notam.E}`);
@@ -89,6 +88,26 @@ class Notams {
                     comment: text,
                     isValid,
                     geometry,
+                    checksum: (0, hash_code_1.hashCode)({ text })
+                };
+            });
+        };
+        this.createMessage = (type) => {
+            return this.models
+                .map(model => {
+                const { id, regime, index, schedule, alts, text, props } = model;
+                return {
+                    id,
+                    type,
+                    name: id,
+                    index: regime || index,
+                    activeSchedule: schedule,
+                    alts: alts,
+                    active: false,
+                    isValid: true,
+                    radius: props.radius,
+                    description: text,
+                    geometry: (0, turf_1.point)(props.center).geometry,
                     checksum: (0, hash_code_1.hashCode)({ text })
                 };
             });

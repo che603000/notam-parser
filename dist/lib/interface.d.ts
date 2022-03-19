@@ -64,4 +64,18 @@ export interface IRegime {
     geometry: Geometry;
     checksum?: number;
 }
+export interface IMessage {
+    id: string;
+    type: string;
+    index?: string;
+    description: string;
+    name: string;
+    active: boolean;
+    activeSchedule?: TSchedule;
+    alts?: TAlts;
+    radius: number;
+    isValid: boolean;
+    geometry: Geometry;
+    checksum?: number;
+}
 //# sourceMappingURL=interface.d.ts.map

@@ -1,4 +1,4 @@
-import { IActiveTime, IModelNotam, IRegime } from "./interface";
+import { IActiveTime, IModelNotam, IRegime, IMessage } from "./interface";
 export declare class Notams {
     models: IModelNotam[];
     constructor(items: string[]);
@@ -7,6 +7,7 @@ export declare class Notams {
      "RD": "опасная зона (указать национальный индекс и номер)",
      "RP": "запретная зона (указать национальный индекс и номер)",
      "RR": "зона ограничения полетов (указать национальный индекс и номер)",
+     * @param type
      * @param subjects
      */
     createActiveTime: (type: string, subjects: string[]) => IActiveTime;
@@ -21,5 +22,6 @@ export declare class Notams {
      * @param subjects
      */
     createRegime: (type: string, subjects: string[]) => IRegime[];
+    createMessage: (type: string) => IMessage[];
 }
 //# sourceMappingURL=index.d.ts.map
