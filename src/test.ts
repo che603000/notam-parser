@@ -1,9 +1,10 @@
-import {parserNotam, createModel} from "./notam-parser";
-import {parserTextNotam} from "./utils/geometry";
+import {parserNotam, createModel} from "./lib/notam-parser";
+import {parserTextNotam} from "./lib/utils/geometry";
 import {circle as createCircle} from "@turf/turf";
-import {IActiveTime, IModelNotam, IRegime} from "./interface";
-import {hashCode} from "./utils/hash-code";
+import {IActiveTime, IModelNotam, IRegime} from "./lib/interface";
+import {hashCode} from "./lib/utils/hash-code";
 
+import data from './data/notam-data.json'
 
 export class Notams {
     models: IModelNotam[];
@@ -26,7 +27,7 @@ export class Notams {
      "RR": "зона ограничения полетов (указать национальный индекс и номер)",
      * @param subjects
      */
-    createActiveTime = (type: string, subjects: string[]): IActiveTime => {
+    createActiveTime = (subjects: string[]): IActiveTime => {
         return this.models
             .filter((item: IModelNotam) => subjects.some(s => s === item.props.subject))
             .map(model => {
@@ -54,15 +55,13 @@ export class Notams {
             .filter((model: IModelNotam) => subjects.some(s => s === model.props.subject))
             .map(model => {
                 try {
-                    if(/9348/.test(model.id))
-                        debugger;
                     model.items = parserTextNotam(model.notam.E);
                     if (model.items.length === 0)
-                        throw new Error(`Invalid parsing geometry. source =${model.notam.E}`);
+                        throw new Error('Parsing not found')
                     model.isValid = true;
                 } catch (e) {
                     console.log(e, '\n', model.text);
-                    model.items = [createCircle(model.props.center, model.props.radius / 1000)];
+                    model.items = [createCircle(model.props.center, model.props.radius)];
                     model.isValid = false;
                 }
                 return model;
@@ -70,7 +69,7 @@ export class Notams {
             .reduce((res: any[], model) => {
                 model.items.forEach((item, index) => {
                     const {id, items, ...data} = model;
-                    const m = {...data, geometry: item.geometry, id, cid: `${model.id.replace("/", "_")}_${index}`}
+                    const m = {...data, geometry: item.geometry, id, cid: `${model.id}-${index}`}
                     res.push(m);
                 })
                 return res;
@@ -98,4 +97,6 @@ export class Notams {
     }
 }
 
-
+const notams = new Notams(data.items);
+const actives = notams.createActiveTime(["RR"]);
+const regime = notams.createRegime('REGIMEZ', ["RT", "WB", "WD", "WP", "WE", "WM"]);
