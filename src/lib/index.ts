@@ -1,7 +1,7 @@
 import {parserNotam, createModel} from "./notam-parser";
 import {parserTextNotam} from "./utils/geometry";
-import {circle as createCircle} from "@turf/turf";
-import {IActiveTime, IModelNotam, IRegime} from "./interface";
+import {circle as createCircle, point as createPoint} from "@turf/turf";
+import {IActiveTime, IModelNotam, IRegime, IMessage} from "./interface";
 import {hashCode} from "./utils/hash-code";
 
 
@@ -24,6 +24,7 @@ export class Notams {
      "RD": "опасная зона (указать национальный индекс и номер)",
      "RP": "запретная зона (указать национальный индекс и номер)",
      "RR": "зона ограничения полетов (указать национальный индекс и номер)",
+     * @param type
      * @param subjects
      */
     createActiveTime = (type: string, subjects: string[]): IActiveTime => {
@@ -92,6 +93,27 @@ export class Notams {
                     checksum: hashCode({text})
 
                 } as IRegime;
+            })
+    }
+    createMessage = (type: string): IMessage[] => {
+        return this.models
+            .map(model => {
+                const {id, regime, index, schedule, alts, text, props} = model;
+                return {
+                    id,
+                    type,
+                    name: id,
+                    index: regime || index,
+                    activeSchedule: schedule,
+                    alts: alts,
+                    active: false,
+                    isValid: true,
+                    radius: props.radius,
+                    description: text,
+                    geometry: createPoint(props.center).geometry,
+                    checksum: hashCode({text})
+
+                } as IMessage;
             })
     }
 }

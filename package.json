@@ -4,9 +4,9 @@
   "description": "Разбор нотам",
   "main": "index.js",
   "scripts": {
-    "devo": "ts-node-dev  src/exec.ts",
-    "tdev": "ts-node-dev  src/index.ts",
-    "dev": "ts-node-dev --respawn  src/index.ts",
+    "dev:exec": "ts-node-dev  src/exec.ts",
+    "dev:test": "ts-node-dev  src/test.ts",
+    "dev": "ts-node-dev --respawn  src/test.ts",
     "rel": "node  dist/index",
     "build": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1"
