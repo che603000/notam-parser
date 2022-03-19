@@ -28,13 +28,13 @@ export enum NOTAM_FIELD {
     Q = 'Щ',
 }
 
-export const handlerNotam = (text: string) => {
+export const createId = (text: string) => {
 
     const enText = ru2en(text);
     const m = enText.match(/^\(?([A-Z]\d{4}\/\d{2}.*?)\s/);
     if (!m)
         return
-    return m[1]
+    return m[1].replace('/', '_');
 }
 
 export const selectFiled = (name: NOTAM_FIELD, source: string) => {
@@ -83,7 +83,7 @@ export const createModel = (notam: INotam): IModelNotam => {
     const dateStart = dateParser(B, new Date('2022-01-01T00:00:00'));
     const dateEnd = dateParser(C, new Date('2032-01-01T00:00:00'));
     return {
-        id: handlerNotam(text),
+        id: createId(text),
         text,
         notam,
         area: A.trim(),
